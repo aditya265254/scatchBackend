@@ -7,7 +7,10 @@ const path = require('path');
 const db = require('./config/mongoose-connections');
 const ownersRoute = require('./routs/ownerRouter')
 const productsRoute = require('./routs/productRouter')
+const indexRoute = require('./routs/index.js')
 const userRoute = require('./routs/userRouter')
+const expressSession = require('express-session');
+const flash = require('connect-flash') 
 
 
 app.use(express.json());
@@ -18,13 +21,15 @@ Ye tab kaam aata hai jab data HTML form se aata hai (normal <form> submit, JSON 
 
 extended: true matlab — nested objects/arrays bhi handle ho jayenge form data me. */
 app.use(cookieParser());
+app.use(expressSession({resave: false, saveUninitialized: false, secret: process.env.EXPRESS_SESSION_SECRET}))
+app.use(flash())
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 
-
-app.use('/owners', ownersRoute)
+app.use("/", indexRoute)
+app.use('/owner', ownersRoute)
 app.use('/user', userRoute)
-app.use('/product', productsRoute)
+app.use('/products', productsRoute)
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

@@ -8,10 +8,6 @@ const userSchema = new mongoose.Schema({
         type: Array,
         default: []
     },
-    isAdmin: {
-        type: Boolean,
-        default: false
-    },
     contact: Number,
     picture: String
 })
