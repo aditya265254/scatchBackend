@@ -21,7 +21,7 @@ router.post('/create', upload.single("image"),async (req, res) => {
       req.flash("success", "Product created Sucessfully")
       res.redirect('/owner/admin')
     } catch (error) {
-        res.send(err.message)
+        res.send(error.message)
     }
 })
 

@@ -1,49 +1,83 @@
-const userSchema = require("../models/user-model")
-const bcrypt = require("bcrypt")
-const {gnerateToken, generateToken} = require("../utils/generateToken.js")
+const userSchema = require("../models/user-model");
+const bcrypt = require("bcrypt");
+const { generateToken } = require("../utils/generateToken.js");
 
-module.exports.registerUser = async (req, res) => {
-     try {
-       let {email, fullName, password} =  req.body
-       let user = await userSchema.findOne({email: email});
-       if(user) return res.send("User alredy registered || plz logIn")
-       bcrypt.genSalt(10,  (err, salt) => {
-        bcrypt.hash(password, salt, async (err, hash) => {
-            if (err) return res.send(err.message)
-                else{
-            let user = await userSchema.create({
-                 email,
-                 fullName, 
-                 password: hash
-                })
-                let token = generateToken(user);
-                res.cookie("token", token)
-                res.send(user)
-            }
-            })
-        })
-     
- } catch (error) {
-    res.send(error.message )
- }
-}
+const registerUser = async (req, res) => {
+    try {
+        let { email, fullName, password } = req.body;
 
-module.exports.loginUser = async (req, res) => {
-    let {email, password} = req.body
-    let user = await userSchema.findOne({email: email});
-    if(!user) return res.send("email or pasword incorrect ")
-        bcrypt.compare(password, user.password, (err, result) => {
-         if(result) {
-            let token = generateToken(user)
-            res.cookie("token", token)
-            res.send("You are loggedin") 
-         } else {
-            return res.send("email or pasword incorrect ")
-         }
-        })
-}
+        if (!email || !fullName || !password) {
+            req.flash("error", "All fields are required");
+            return res.redirect("/");
+        }
 
-module.exports.logout = (req, res) => {
-    res.cookie("token", "")
-    res.redirect("/")
-}
+        let user = await userSchema.findOne({ email: email });
+        if (user) {
+            req.flash("error", "User already registered, please login");
+            return res.redirect("/");
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(password, salt);
+
+        await userSchema.create({
+            email,
+            fullName,
+            password: hash
+        });
+
+        req.flash("success", "User registered successfully, please login");
+        return res.redirect("/");
+
+    } catch (error) {
+        console.log("Registration Error:", error.message);
+        req.flash("error", error.message);
+        return res.redirect("/");
+    }
+};
+
+const loginUser = async (req, res) => {
+    try {
+        let { email, password } = req.body;
+
+        if (!email || !password) {
+            req.flash("error", "Please fill all fields");
+            return res.redirect("/");
+        }
+
+        let user = await userSchema.findOne({ email: email });
+        if (!user) {
+            req.flash("error", "Email or password incorrect");
+            return res.redirect("/");
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (isMatch) {
+            let token = generateToken(user);
+            res.cookie("token", token);
+            return res.redirect("/shop");
+        } else {
+            req.flash("error", "Email or password incorrect");
+            return res.redirect("/");
+        }
+
+    } catch (error) {
+        console.log("Login Error:", error.message);
+        req.flash("error", error.message);
+        return res.redirect("/");
+    }
+};
+
+const logout = (req, res) => {
+    res.cookie("token", "");
+    req.flash("success", "Logged out successfully");
+    return res.redirect("/");
+};
+
+// FIX: Explicitly export as an object
+module.exports = {
+    registerUser,
+    loginUser,
+    logout
+};

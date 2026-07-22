@@ -4,16 +4,15 @@ const productModel = require("../models/product-model");
 const router = express.Router()
 
 router.get("/", (req, res) => {
-   let error = req.flash("error");
-   res.render("index", {error})
-})
+    let error = req.flash("error");
+    let success = req.flash("success"); 
+    res.render("index", { error, success });
+});
 
 router.get("/shop", isLoggedin, async (req, res ) => {
-    let product = await productModel.find()
-    res.render("shop", {product})
+    let products = await productModel.find()
+    res.render("shop", {products})
 })
 
-router.get("/logout", isLoggedin, (req, res) => {
-    res.render("shop")
-})
+
 module.exports = router;
